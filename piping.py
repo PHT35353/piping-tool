@@ -185,10 +185,7 @@ mapbox_map_html = f"""
     map.on('draw.delete', deleteFeature);
 
     function updateMeasurements(e) {{
-    
-       global totalDistance  # Ensure totalDistance is global to accumulate distances across updates
-        totalDistance = 0  # Reset total distance before starting new calculations
-        
+     let totalDistance = 0;  // Reset total distance before starting new calculations        
         const data = Draw.getAll();
         let sidebarContent = "";
         if (data.features.length > 0) {{
@@ -315,8 +312,8 @@ mapbox_map_html = f"""
         // Call function to calculate pipe cost based on total distance
         let pipeMaterial = prompt("Enter the pipe material (e.g., B1001, B1003, B1005, B1008):");
         totalCost = calculate_pipe_cost(pipeMaterial, totalDistance);
-        sidebarContent += f"<p>Total Pipe Distance: {totalDistance:.2f} km</p>"
-        sidebarContent += f"<p>Total Pipe Cost: €{totalCost:.2f}</p>"
+        sidebarContent += `<p>Total Pipe Distance: ${totalDistance.toFixed(2)} km</p>`;
+        sidebarContent += `<p>Total Pipe Cost: €${totalCost.toFixed(2)}</p>`;
         document.getElementById('measurements').innerHTML = sidebarContent;
     }}
 
