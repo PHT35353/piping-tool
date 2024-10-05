@@ -210,7 +210,7 @@ components.html(f"""
     let totalDistance = 0;
     let totalCost = 0;
 
-    const pythonData = {json.dumps(data_to_js)};  // Pass Python data to JS
+    const pythonData = {json.dumps(data_to_js)};  // Pass Python data to JS as a JSON object
 
     // Use Python data in the JavaScript code
     document.getElementById('measurements').innerHTML = `
