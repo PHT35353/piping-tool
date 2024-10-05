@@ -231,9 +231,8 @@ mapbox_map_html = f"""
                     }});
 
                     sidebarContent += '<p>Line ' + featureNames[feature.id] + ' belongs to ' + (startLandmark?.properties.name || 'Unknown') + ' - ' + (endLandmark?.properties.name || 'Unknown') + ': ' + distanceValue + ' ' + distanceUnit + '</p>';
-
-                    totalDistance += length;
-                }} else if (feature.geometry.type === 'Polygon') {{
+                   }} 
+            else if (feature.geometry.type === 'Polygon') {{
                     if (!feature.properties.name) {{
                         if (!featureNames[feature.id]) {{
                             const name = prompt("Enter a name for this polygon:");
