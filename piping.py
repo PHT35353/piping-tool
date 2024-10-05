@@ -68,6 +68,9 @@ if st.sidebar.button("Search Location"):
 # Mapbox GL JS API token
 mapbox_access_token = "pk.eyJ1IjoicGFyc2ExMzgzIiwiYSI6ImNtMWRqZmZreDB6MHMyaXNianJpYWNhcGQifQ.hot5D26TtggHFx9IFM-9Vw"
 
+# Global totalDistance variable to persist
+totalDistance = 0
+
 # HTML and JS for Mapbox with Mapbox Draw plugin to add drawing functionalities
 mapbox_map_html = f"""
 <!DOCTYPE html>
