@@ -185,6 +185,10 @@ mapbox_map_html = f"""
     map.on('draw.delete', deleteFeature);
 
     function updateMeasurements(e) {{
+    
+       global totalDistance  # Ensure totalDistance is global to accumulate distances across updates
+        totalDistance = 0  # Reset total distance before starting new calculations
+        
         const data = Draw.getAll();
         let sidebarContent = "";
         if (data.features.length > 0) {{
@@ -221,7 +225,10 @@ mapbox_map_html = f"""
                             'line-width': 4
                         }}
                     }});
-
+                    
+                    # Accumulate the length of all lines
+                    totalDistance += length
+                    
                     let distanceUnit = length >= 1 ? 'km' : 'm';
                     let distanceValue = length >= 1 ? length.toFixed(2) : (length * 1000).toFixed(2);
 
