@@ -1,40 +1,12 @@
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
-import requests
-import json  # New import for passing Python data to JS
 
-# B1001 embedded data
-B1001_data = [
-    {"Nominal diameter (inches)": 0.5, "External diameter (mm)": 21.3, "Wall thickness (mm)": 2.77, "Weight (kg/m)": 1.2, "Cost per 100 m (Euro)": 300, "Pressure (bar)": 20},
-    {"Nominal diameter (inches)": 1.0, "External diameter (mm)": 33.4, "Wall thickness (mm)": 3.38, "Weight (kg/m)": 2.4, "Cost per 100 m (Euro)": 450, "Pressure (bar)": 25},
-    # Add more rows from B1001 CSV
-]
-B1001_df = pd.DataFrame(B1001_data)
-
-# B1003 embedded data
-B1003_data = [
-    {"Nominal diameter (inches)": 0.5, "External diameter (mm)": 21.3, "Wall thickness (mm)": 2.77, "Weight (kg/m)": 1.5, "Cost per 100 m (Euro)": 320, "Pressure (bar)": 22},
-    {"Nominal diameter (inches)": 1.0, "External diameter (mm)": 33.4, "Wall thickness (mm)": 3.38, "Weight (kg/m)": 2.7, "Cost per 100 m (Euro)": 470, "Pressure (bar)": 27},
-    # Add more rows from B1003 CSV
-]
-B1003_df = pd.DataFrame(B1003_data)
-
-# B1005 embedded data
-B1005_data = [
-    {"Nominal diameter (inches)": 0.5, "External diameter (mm)": 21.34, "Wall thickness (mm)": 2.11, "Weight (kg/m)": 1.7, "Cost per m (304 Euro)": 3.0, "Pressure (bar)": 18},
-    {"Nominal diameter (inches)": 1.0, "External diameter (mm)": 33.4, "Wall thickness (mm)": 2.77, "Weight (kg/m)": 2.9, "Cost per m (304 Euro)": 4.5, "Pressure (bar)": 22},
-    # Add more rows from B1005 CSV
-]
-B1005_df = pd.DataFrame(B1005_data)
-
-# B1008 embedded data
-B1008_data = [
-    {"External diameter (mm)": 25, "Wall thickness (mm)": 1.5, "Pressure (bar)": 15, "Cost per 100 m (Euro)": 208},
-    {"External diameter (mm)": 32, "Wall thickness (mm)": 1.8, "Pressure (bar)": 18, "Cost per 100 m (Euro)": 243},
-    # Add more rows from B1008 CSV
-]
-B1008_df = pd.DataFrame(B1008_data)
+# Embedding the pipe cost data directly into the app (from CSV)
+B1001_data = {'cost_per_meter': 12.0}  # Assume values based on the CSV
+B1003_data = {'cost_per_meter': 15.0}
+B1005_data = {'cost_per_meter': 20.0}
+B1008_data = {'cost_per_meter': 8.0}
 
 # Set up a title for the app
 st.title("Piping Tool with Price Calculation")
@@ -42,11 +14,9 @@ st.title("Piping Tool with Price Calculation")
 # Add instructions and explain color options
 st.markdown("""
 This tool allows you to:
-1. Draw rectangles (polygons), lines, and markers (landmarks) on the map.
-2. Assign names and choose specific colors for each feature individually upon creation.
-3. Display distances for lines and dimensions for polygons both on the map and in the sidebar.
-4. Show relationships between landmarks and lines (e.g., a line belongs to two landmarks).
-5. Automatically calculate the pipe cost based on the distance drawn on the map and the pipe material.
+1. Draw lines representing pipes between points on the map.
+2. Display distances for lines directly on the map and in the sidebar.
+3. Automatically calculate the total pipe cost based on the distance drawn on the map and the selected pipe material.
 """)
 
 # Sidebar to manage the map interactions
@@ -66,40 +36,11 @@ address_search = st.sidebar.text_input("Search for address (requires internet co
 if st.sidebar.button("Search Location"):
     default_location = [latitude, longitude]
 
-# Function to calculate pipe cost based on the material and distance
-def calculate_pipe_cost(material, distance_km):
-    try:
-        if material == 'B1001':
-            df = B1001_df
-        elif material == 'B1003':
-            df = B1003_df
-        elif material == 'B1005':
-            df = B1005_df
-        elif material == 'B1008':
-            df = B1008_df
-        else:
-            st.sidebar.write("Invalid pipe material entered.")
-            return 0
+# Mapbox GL JS API token
+mapbox_access_token = "pk.eyJ1IjoicGFyc2ExMzgzIiwiYSI6ImNtMWRqZmZreDB6MHMyaXNianJpYWNhcGQifQ.hot5D26TtggHFx9IFM-9Vw"
 
-        total_cost = df['Cost per 100 m (Euro)'].mean() * distance_km * 1000 / 100  # Convert km to meters
-        return total_cost
-    except Exception as e:
-        st.sidebar.write(f"Error calculating pipe cost: {e}")
-        return 0
-
-# Assuming some default totalDistance and totalCost as an example for passing to JavaScript
-totalDistance = 1.5  # in km
-pipeMaterial = "B1003"
-totalCost = calculate_pipe_cost(pipeMaterial, totalDistance)
-
-# Convert Python variables to JSON for passing to JS
-data_to_js = {
-    "totalDistance": totalDistance,
-    "totalCost": totalCost,
-}
-
-# Pass data to JavaScript via HTML
-components.html(f"""
+# HTML and JS for Mapbox with Mapbox Draw plugin to add drawing functionalities
+mapbox_map_html = f"""
 <!DOCTYPE html>
 <html>
 <head>
@@ -173,28 +114,31 @@ components.html(f"""
 <button id="toggleSidebar" onclick="toggleSidebar()">Close Sidebar</button>
 <div id="map"></div>
 <script>
-    mapboxgl.accessToken = 'pk.eyJ1IjoicGFyc2ExMzgzIiwiYSI6ImNtMWRqZmZreDB6MHMyaXNianJpYWNhcGQifQ.hot5D26TtggHFx9IFM-9Vw';
+    mapboxgl.accessToken = '{mapbox_access_token}';
 
     const map = new mapboxgl.Map({{
         container: 'map',
         style: 'mapbox://styles/mapbox/satellite-streets-v12',
         center: [{longitude}, {latitude}],
         zoom: 13,
-        pitch: 45,
-        bearing: 0,
+        pitch: 45, // For 3D effect
+        bearing: 0, // Rotation angle
         antialias: true
     }});
 
+    // Add map controls for zoom, rotation, and fullscreen
     map.addControl(new mapboxgl.NavigationControl());
     map.addControl(new mapboxgl.FullscreenControl());
 
+    // Enable rotation and pitch adjustments using right-click
     map.dragRotate.enable();
     map.touchZoomRotate.enableRotation();
 
+    // Add the Draw control for drawing polygons, markers, lines, etc.
     const Draw = new MapboxDraw({{
         displayControlsDefault: false,
         controls: {{
-            polygon: true,
+            polygon: false,
             line_string: true,
             point: true,
             trash: true
@@ -203,20 +147,47 @@ components.html(f"""
 
     map.addControl(Draw);
 
-    let landmarkCount = 0;
-    let landmarks = [];
-    let featureColors = {{}};
-    let featureNames = {{}};
     let totalDistance = 0;
     let totalCost = 0;
+    const pipeCosts = {{
+        'B1001': {B1001_data['cost_per_meter']},
+        'B1003': {B1003_data['cost_per_meter']},
+        'B1005': {B1005_data['cost_per_meter']},
+        'B1008': {B1008_data['cost_per_meter']}
+    }};
+    
+    function updateMeasurements(e) {{
+        totalDistance = 0;
+        let sidebarContent = "";
+        const data = Draw.getAll();
+        if (data.features.length > 0) {{
+            const features = data.features;
+            features.forEach(function (feature) {{
+                if (feature.geometry.type === 'LineString') {{
+                    const length = turf.length(feature); // Calculate length in km
+                    totalDistance += length;
 
-    const pythonData = {json.dumps(data_to_js)};  // Pass Python data to JS as a JSON object
+                    const pipeMaterial = prompt("Enter the pipe material (B1001, B1003, B1005, B1008):");
+                    const costPerMeter = pipeCosts[pipeMaterial] || 0;
 
-    // Use Python data in the JavaScript code
-    document.getElementById('measurements').innerHTML = `
-        <p>Total Pipe Distance: ${pythonData.totalDistance.toFixed(2)} km</p>
-        <p>Total Pipe Cost: €${pythonData.totalCost.toFixed(2)}</p>
-    `;
+                    const costForLine = costPerMeter * length * 1000; // Convert km to meters
+
+                    sidebarContent += `<p>Line length: {length.toFixed(2)} km</p>`;
+                    sidebarContent += `<p>Cost: €{costForLine.toFixed(2)}</p>`;
+                }}
+            }});
+        }} else {{
+            sidebarContent = "<p>No lines drawn yet.</p>";
+        }}
+
+        sidebarContent += `<p>Total Distance: {totalDistance.toFixed(2)} km</p>`;
+        document.getElementById('measurements').innerHTML = sidebarContent;
+    }}
+
+    // Handle feature creation and updates
+    map.on('draw.create', updateMeasurements);
+    map.on('draw.update', updateMeasurements);
+    map.on('draw.delete', updateMeasurements);
 
     function toggleSidebar() {{
         var sidebar = document.getElementById('sidebar');
@@ -231,7 +202,9 @@ components.html(f"""
 </script>
 </body>
 </html>
-""", height=600)
+"""
+# Render the Mapbox 3D Satellite map with drawing functionality and custom features
+components.html(mapbox_map_html, height=600)
 
 # Address search using Mapbox Geocoding API
 if address_search:
