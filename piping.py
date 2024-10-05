@@ -185,7 +185,7 @@ mapbox_map_html = f"""
     map.on('draw.delete', deleteFeature);
 
     function updateMeasurements(e) {{
-     let totalDistance = 0;  // Reset total distance before starting new calculations        
+      totalDistance = 0;  // Reset total distance before starting new calculations        
         const data = Draw.getAll();
         let sidebarContent = "";
         if (data.features.length > 0) {{
@@ -193,6 +193,13 @@ mapbox_map_html = f"""
             features.forEach(function (feature, index) {{
                 if (feature.geometry.type === 'LineString') {{
                     const length = turf.length(feature);
+                    
+                    // Accumulate the length of the line into totalDistance
+                    totalDistance += length;
+
+                    let distanceUnit = length >= 1 ? 'km' : 'm';
+                    let distanceValue = length >= 1 ? length.toFixed(2) : (length * 1000).toFixed(2);
+                    
                     const startCoord = feature.geometry.coordinates[0];
                     const endCoord = feature.geometry.coordinates[feature.geometry.coordinates.length - 1];
 
@@ -222,12 +229,6 @@ mapbox_map_html = f"""
                             'line-width': 4
                         }}
                     }});
-                    
-                    # Accumulate the length of all lines
-                    totalDistance += length
-                    
-                    let distanceUnit = length >= 1 ? 'km' : 'm';
-                    let distanceValue = length >= 1 ? length.toFixed(2) : (length * 1000).toFixed(2);
 
                     sidebarContent += '<p>Line ' + featureNames[feature.id] + ' belongs to ' + (startLandmark?.properties.name || 'Unknown') + ' - ' + (endLandmark?.properties.name || 'Unknown') + ': ' + distanceValue + ' ' + distanceUnit + '</p>';
 
@@ -312,6 +313,8 @@ mapbox_map_html = f"""
         // Call function to calculate pipe cost based on total distance
         let pipeMaterial = prompt("Enter the pipe material (e.g., B1001, B1003, B1005, B1008):");
         totalCost = calculate_pipe_cost(pipeMaterial, totalDistance);
+
+        // Display total distance and cost in the sidebar
         sidebarContent += `<p>Total Pipe Distance: ${totalDistance.toFixed(2)} km</p>`;
         sidebarContent += `<p>Total Pipe Cost: €${totalCost.toFixed(2)}</p>`;
         document.getElementById('measurements').innerHTML = sidebarContent;
