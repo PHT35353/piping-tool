@@ -372,22 +372,3 @@ def calculate_pipe_cost(material, distance_km):
 
 # Render the Mapbox 3D Satellite map with drawing functionality and custom features
 components.html(mapbox_map_html, height=600)
-
-# Address search using Mapbox Geocoding API
-if address_search:
-    geocode_url = f"https://api.mapbox.com/geocoding/v5/mapbox.places/{address_search}.json?access_token={mapbox_access_token}"
-    try:
-        response = requests.get(geocode_url)
-        if response.status_code == 200:
-            geo_data = response.json()
-            if len(geo_data['features']) > 0:
-                coordinates = geo_data['features'][0]['center']
-                latitude, longitude = coordinates[1], coordinates[0]
-                st.sidebar.success(f"Address found: {geo_data['features'][0]['place_name']}")
-                st.sidebar.write(f"Coordinates: Latitude {latitude}, Longitude {longitude}")
-            else:
-                st.sidebar.error("Address not found.")
-        else:
-            st.sidebar.error("Error connecting to the Mapbox API.")
-    except Exception as e:
-        st.sidebar.error(f"Error: {e}")
