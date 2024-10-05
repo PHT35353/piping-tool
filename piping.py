@@ -2,6 +2,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
 import requests
+import json  # New import for passing Python data to JS
 
 # B1001 embedded data
 B1001_data = [
@@ -65,14 +66,40 @@ address_search = st.sidebar.text_input("Search for address (requires internet co
 if st.sidebar.button("Search Location"):
     default_location = [latitude, longitude]
 
-# Mapbox GL JS API token
-mapbox_access_token = "pk.eyJ1IjoicGFyc2ExMzgzIiwiYSI6ImNtMWRqZmZreDB6MHMyaXNianJpYWNhcGQifQ.hot5D26TtggHFx9IFM-9Vw"
+# Function to calculate pipe cost based on the material and distance
+def calculate_pipe_cost(material, distance_km):
+    try:
+        if material == 'B1001':
+            df = B1001_df
+        elif material == 'B1003':
+            df = B1003_df
+        elif material == 'B1005':
+            df = B1005_df
+        elif material == 'B1008':
+            df = B1008_df
+        else:
+            st.sidebar.write("Invalid pipe material entered.")
+            return 0
 
-# Global totalDistance variable to persist
-totalDistance = 0
+        total_cost = df['Cost per 100 m (Euro)'].mean() * distance_km * 1000 / 100  # Convert km to meters
+        return total_cost
+    except Exception as e:
+        st.sidebar.write(f"Error calculating pipe cost: {e}")
+        return 0
 
-# HTML and JS for Mapbox with Mapbox Draw plugin to add drawing functionalities
-mapbox_map_html = f"""
+# Assuming some default totalDistance and totalCost as an example for passing to JavaScript
+totalDistance = 1.5  # in km
+pipeMaterial = "B1003"
+totalCost = calculate_pipe_cost(pipeMaterial, totalDistance)
+
+# Convert Python variables to JSON for passing to JS
+data_to_js = {
+    "totalDistance": totalDistance,
+    "totalCost": totalCost,
+}
+
+# Pass data to JavaScript via HTML
+components.html(f"""
 <!DOCTYPE html>
 <html>
 <head>
@@ -146,7 +173,7 @@ mapbox_map_html = f"""
 <button id="toggleSidebar" onclick="toggleSidebar()">Close Sidebar</button>
 <div id="map"></div>
 <script>
-    mapboxgl.accessToken = '{mapbox_access_token}';
+    mapboxgl.accessToken = 'pk.eyJ1IjoicGFyc2ExMzgzIiwiYSI6ImNtMWRqZmZreDB6MHMyaXNianJpYWNhcGQifQ.hot5D26TtggHFx9IFM-9Vw';
 
     const map = new mapboxgl.Map({{
         container: 'map',
@@ -183,143 +210,13 @@ mapbox_map_html = f"""
     let totalDistance = 0;
     let totalCost = 0;
 
-    map.on('draw.create', updateMeasurements);
-    map.on('draw.update', updateMeasurements);
-    map.on('draw.delete', deleteFeature);
+    const pythonData = {json.dumps(data_to_js)};  // Pass Python data to JS
 
-    function updateMeasurements(e) {{
-        totalDistance = 0;  // Reset total distance before starting new calculations        
-        const data = Draw.getAll();
-        let sidebarContent = "";
-        if (data.features.length > 0) {{
-            const features = data.features;
-            features.forEach(function (feature, index) {{
-                if (feature.geometry.type === 'LineString') {{
-                    const length = turf.length(feature);
-                    
-                    // Accumulate the length of the line into totalDistance
-                    totalDistance += length;
-
-                    let distanceUnit = length >= 1 ? 'km' : 'm';
-                    let distanceValue = length >= 1 ? length.toFixed(2) : (length * 1000).toFixed(2);
-                    
-                    const startCoord = feature.geometry.coordinates[0];
-                    const endCoord = feature.geometry.coordinates[feature.geometry.coordinates.length - 1];
-
-                    let startLandmark = landmarks.find(lm => turf.distance(lm.geometry.coordinates, startCoord) < 0.01);
-                    let endLandmark = landmarks.find(lm => turf.distance(lm.geometry.coordinates, endCoord) < 0.01);
-                    
-                    if (!featureNames[feature.id]) {{
-                        const name = prompt("Enter a name for this line:");
-                        featureNames[feature.id] = name || "Line " + (index + 1);
-                    }}
-
-                    if (!featureColors[feature.id]) {{
-                        const lineColor = prompt("Enter a color for this line (e.g., red, purple, cyan, pink):");
-                        featureColors[feature.id] = lineColor || 'blue';
-                    }}
-
-                    map.addLayer({{
-                        id: 'line-' + feature.id,
-                        type: 'line',
-                        source: {{
-                            type: 'geojson',
-                            data: feature
-                        }},
-                        layout: {{}},
-                        paint: {{
-                            'line-color': featureColors[feature.id],
-                            'line-width': 4
-                        }}
-                    }});
-
-                    sidebarContent += '<p>Line ' + featureNames[feature.id] + ' belongs to ' + (startLandmark?.properties.name || 'Unknown') + ' - ' + (endLandmark?.properties.name || 'Unknown') + ': ' + distanceValue + ' ' + distanceUnit + '</p>';
-                }} else if (feature.geometry.type === 'Polygon') {{
-                    if (!feature.properties.name) {{
-                        if (!featureNames[feature.id]) {{
-                            const name = prompt("Enter a name for this polygon:");
-                            feature.properties.name = name || "Polygon " + (index + 1);
-                            featureNames[feature.id] = feature.properties.name;
-                        }} else {{
-                            feature.properties.name = featureNames[feature.id];
-                        }}
-                    }}
-
-                    if (!featureColors[feature.id]) {{
-                        const polygonColor = prompt("Enter a color for this polygon (e.g., green, yellow):");
-                        featureColors[feature.id] = polygonColor || 'yellow';
-                    }}
-
-                    map.addLayer({{
-                        id: 'polygon-' + feature.id,
-                        type: 'fill',
-                        source: {{
-                            type: 'geojson',
-                            data: feature
-                        }},
-                        paint: {{
-                            'fill-color': featureColors[feature.id],
-                            'fill-opacity': 0.6
-                        }}
-                    }});
-
-                    const bbox = turf.bbox(feature);
-                    const width = turf.distance([bbox[0], bbox[1]], [bbox[2], bbox[1]]);
-                    const height = turf.distance([bbox[0], bbox[1]], [bbox[0], bbox[3]]);
-
-                    let widthUnit = width >= 1 ? 'km' : 'm';
-                    let heightUnit = height >= 1 ? 'km' : 'm';
-                    let widthValue = width >= 1 ? width.toFixed(2) : (width * 1000).toFixed(2);
-                    let heightValue = height >= 1 ? height.toFixed(2) : (height * 1000).toFixed(2);
-
-                    sidebarContent += '<p>Polygon ' + feature.properties.name + ': Width = ' + widthValue + ' ' + widthUnit + ', Height = ' + heightValue + ' ' + heightUnit + '</p>';
-                }} else if (feature.geometry.type === 'Point') {{
-                    if (!feature.properties.name) {{
-                        if (!featureNames[feature.id]) {{
-                            const name = prompt("Enter a name for this landmark:");
-                            feature.properties.name = name || "Landmark " + (landmarkCount + 1);
-                            featureNames[feature.id] = feature.properties.name;
-                            landmarks.push(feature);
-                            landmarkCount++;
-                        }} else {{
-                            feature.properties.name = featureNames[feature.id];
-                        }}
-                    }}
-
-                    if (!featureColors[feature.id]) {{
-                        const markerColor = prompt("Enter a color for this landmark (e.g., black, white):");
-                        featureColors[feature.id] = markerColor || 'black';
-                    }}
-
-                    map.addLayer({{
-                        id: 'marker-' + feature.id,
-                        type: 'circle',
-                        source: {{
-                            type: 'geojson',
-                            data: feature
-                        }},
-                        paint: {{
-                            'circle-radius': 8,
-                            'circle-color': featureColors[feature.id]
-                        }}
-                    }});
-
-                    sidebarContent += '<p>Landmark ' + feature.properties.name + '</p>';
-                }}
-            }});
-        }} else {{
-            sidebarContent = "<p>No features drawn yet.</p>";
-        }}
-
-        // Call function to calculate pipe cost based on total distance
-        let pipeMaterial = prompt("Enter the pipe material (e.g., B1001, B1003, B1005, B1008):");
-        totalCost = calculate_pipe_cost(pipeMaterial, totalDistance);
-
-        // Display total distance and cost in the sidebar using JavaScript's toFixed
-        sidebarContent += `<p>Total Pipe Distance: ${totalDistance.toFixed(2)} km</p>`;
-        sidebarContent += `<p>Total Pipe Cost: €${totalCost.toFixed(2)}</p>`;
-        document.getElementById('measurements').innerHTML = sidebarContent;
-    }}
+    // Use Python data in the JavaScript code
+    document.getElementById('measurements').innerHTML = `
+        <p>Total Pipe Distance: ${pythonData.totalDistance.toFixed(2)} km</p>
+        <p>Total Pipe Cost: €${pythonData.totalCost.toFixed(2)}</p>
+    `;
 
     function toggleSidebar() {{
         var sidebar = document.getElementById('sidebar');
@@ -331,44 +228,26 @@ mapbox_map_html = f"""
             document.getElementById('toggleSidebar').innerText = "Open Sidebar";
         }}
     }}
-
-    function deleteFeature(e) {{
-        const features = e.features;
-        features.forEach(function (feature) {{
-            delete featureColors[feature.id];
-            delete featureNames[feature.id];
-
-            map.removeLayer('line-' + feature.id);
-            map.removeLayer('polygon-' + feature.id);
-            map.removeLayer('marker-' + feature.id);
-        }});
-        updateMeasurements();
-    }}
 </script>
 </body>
 </html>
-"""
+""", height=600)
 
-# Function to calculate pipe cost based on the material and distance
-def calculate_pipe_cost(material, distance_km):
+# Address search using Mapbox Geocoding API
+if address_search:
+    geocode_url = f"https://api.mapbox.com/geocoding/v5/mapbox.places/{address_search}.json?access_token={mapbox_access_token}"
     try:
-        if material == 'B1001':
-            df = B1001_df
-        elif material == 'B1003':
-            df = B1003_df
-        elif material == 'B1005':
-            df = B1005_df
-        elif material == 'B1008':
-            df = B1008_df
+        response = requests.get(geocode_url)
+        if response.status_code == 200:
+            geo_data = response.json()
+            if len(geo_data['features']) > 0:
+                coordinates = geo_data['features'][0]['center']
+                latitude, longitude = coordinates[1], coordinates[0]
+                st.sidebar.success(f"Address found: {geo_data['features'][0]['place_name']}")
+                st.sidebar.write(f"Coordinates: Latitude {latitude}, Longitude {longitude}")
+            else:
+                st.sidebar.error("Address not found.")
         else:
-            st.sidebar.write("Invalid pipe material entered.")
-            return 0
-
-        total_cost = df['Cost per 100 m (Euro)'].mean() * distance_km * 1000 / 100  # Convert km to meters
-        return total_cost
+            st.sidebar.error("Error connecting to the Mapbox API.")
     except Exception as e:
-        st.sidebar.write(f"Error calculating pipe cost: {e}")
-        return 0
-
-# Render the Mapbox 3D Satellite map with drawing functionality and custom features
-components.html(mapbox_map_html, height=600)
+        st.sidebar.error(f"Error: {e}")
