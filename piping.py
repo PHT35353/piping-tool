@@ -185,7 +185,7 @@ mapbox_map_html = f"""
     map.on('draw.delete', deleteFeature);
 
     function updateMeasurements(e) {{
-      totalDistance = 0;  // Reset total distance before starting new calculations        
+        totalDistance = 0;  // Reset total distance before starting new calculations        
         const data = Draw.getAll();
         let sidebarContent = "";
         if (data.features.length > 0) {{
@@ -231,8 +231,7 @@ mapbox_map_html = f"""
                     }});
 
                     sidebarContent += '<p>Line ' + featureNames[feature.id] + ' belongs to ' + (startLandmark?.properties.name || 'Unknown') + ' - ' + (endLandmark?.properties.name || 'Unknown') + ': ' + distanceValue + ' ' + distanceUnit + '</p>';
-                   }} 
-            else if (feature.geometry.type === 'Polygon') {{
+                }} else if (feature.geometry.type === 'Polygon') {{
                     if (!feature.properties.name) {{
                         if (!featureNames[feature.id]) {{
                             const name = prompt("Enter a name for this polygon:");
