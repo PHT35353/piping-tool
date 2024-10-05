@@ -313,8 +313,8 @@ mapbox_map_html = f"""
         totalCost = calculate_pipe_cost(pipeMaterial, totalDistance);
 
         // Display total distance and cost in the sidebar
-        sidebarContent += `<p>Total Pipe Distance: ${totalDistance.toFixed(2)} km</p>`;
-        sidebarContent += `<p>Total Pipe Cost: €${totalCost.toFixed(2)}</p>`;
+        sidebarContent += `<p>Total Pipe Distance: {totalDistance.toFixed(2)} km</p>`;
+        sidebarContent += `<p>Total Pipe Cost: €{totalCost.toFixed(2)}</p>`;
         document.getElementById('measurements').innerHTML = sidebarContent;
     }}
 
