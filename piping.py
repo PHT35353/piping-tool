@@ -533,14 +533,31 @@ def Pipe_finder(material, P, distanceValue):
     else:
         st.write("Material not found")
 
+# Function to get distance input along with other inputs
+def get_user_inputs():
+    pressure = st.number_input("Enter the pressure (bar):", min_value=0.0, format="%.2f")
+    temperature = st.number_input("Enter the temperature (°C):", min_value=0.0, format="%.2f")
+    medium = st.text_input("Enter the medium:")
+    
+    # Add a field for the user to input the distance from the map's sidebar
+    distance = st.number_input("Enter the pipe length (meters):", min_value=0.0, format="%.2f")
+    
+    return pressure, temperature, medium, distance
+
 # Main function to run the app
 def pipe_main():
     st.title("Pipe Selection Tool")
+    
     try:
-        P, T, M = get_user_inputs1()
+        # Get the inputs, including the distance the user manually enters
+        P, T, M, distanceValue = get_user_inputs()
+
+        # Add a button to calculate pipes and cost
         if st.button("Find Pipes"):
-            Pipe_Material = choose_pipe_material(P, T, M)
+            Pipe_Material = choose_pipe_material(P, T, M)  # Choose the pipe material based on the inputs
             st.write(f"Selected Pipe Material: {Pipe_Material}")
+            
+            # Use the entered distance in the pipe finding and cost calculation
             Pipe_finder(Pipe_Material, P, distanceValue)
            
     except Exception as e:
