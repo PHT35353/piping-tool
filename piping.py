@@ -202,7 +202,7 @@ mapbox_map_html = f"""
 
                     let distanceUnit = length >= 1 ? 'km' : 'm';
                     let {distanceValue} = length >= 1 ? length.toFixed(2) : (length * 1000).toFixed(2);
-                    let distanceValue = length >= 1 ? length.toFixed(2) : (length * 1000).toFixed(2);
+                    
 
                     sidebarContent += '<p>Line ' + featureNames[feature.id] + ' belongs to ' + (startLandmark?.properties.name || 'Unknown') + ' - ' + (endLandmark?.properties.name || 'Unknown') + ': ' + distanceValue + ' ' + distanceUnit + '</p>';
                 }} else if (feature.geometry.type === 'Polygon') {{
@@ -518,17 +518,17 @@ def B1008_filter(P, distanceValue):
         st.dataframe(df)
 
 # Function to choose pipe and filter based on material
-def Pipe_finder(material, P):
+def Pipe_finder(material, P, distanceValue):
     if material == 'B1001':
-        B1001_filter(P)
+        B1001_filter(P, distanceValue)
         st.write("")
-        B1003_filter(P)
+        B1003_filter(P, distanceValue)
 
     elif material == 'B1005':
-        B1005_filter(P)
+        B1005_filter(P, distanceValue)
 
     elif material == 'B1008':
-        B1008_filter(P)
+        B1008_filter(P, distanceValue)
 
     else:
         st.write("Material not found")
@@ -541,7 +541,7 @@ def pipe_main():
         if st.button("Find Pipes"):
             Pipe_Material = choose_pipe_material(P, T, M)
             st.write(f"Selected Pipe Material: {Pipe_Material}")
-            Pipe_finder(Pipe_Material, P)
+            Pipe_finder(Pipe_Material, P, distanceValue)
 
     except Exception as e:
         st.error(f"An error occurred: {e}")
