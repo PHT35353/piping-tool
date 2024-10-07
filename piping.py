@@ -4,7 +4,6 @@ import math
 import streamlit.components.v1 as components
 import requests
 
-
 # Set up a title for the app
 st.title("Piping tool")
 
@@ -203,7 +202,7 @@ mapbox_map_html = f"""
 
                     let distanceUnit = length >= 1 ? 'km' : 'm';
                     let distanceValue = length >= 1 ? length.toFixed(2) : (length * 1000).toFixed(2);
-                    window.parent.document.getElementById('distance_value').value = distanceValue;
+                    
 
                     sidebarContent += '<p>Line ' + featureNames[feature.id] + ' belongs to ' + (startLandmark?.properties.name || 'Unknown') + ' - ' + (endLandmark?.properties.name || 'Unknown') + ': ' + distanceValue + ' ' + distanceUnit + '</p>';
                 }} else if (feature.geometry.type === 'Polygon') {{
@@ -323,24 +322,6 @@ mapbox_map_html = f"""
 # Render the Mapbox 3D Satellite map with drawing functionality and custom features
 components.html(mapbox_map_html, height=600)
 
-# Add the hidden input field to capture distanceValue from JavaScript
-components.html("""
-    <input type="hidden" id="distanceValue" name="distanceValue" value="0">
-""", height=0)
-
-# Use Streamlit to get the distance value from the hidden input
-distanceValue = st.text_input("Captured Distance Value", key="distanceValue")
-
-# Check if distance_value is valid, and convert to float if needed
-if distanceValue:
-    try:
-        distanceValue = float(distanceValue)
-    except ValueError:
-        st.error("Invalid distance value")
-else:
-    distance_value = 0.0
-
-
 # Address search using Mapbox Geocoding API
 if address_search:
     geocode_url = f"https://api.mapbox.com/geocoding/v5/mapbox.places/{address_search}.json?access_token={mapbox_access_token}"
@@ -360,29 +341,6 @@ if address_search:
             st.sidebar.error("Error connecting to the Mapbox API.")
     except Exception as e:
         st.sidebar.error(f"Error: {e}")
-
-# Create a custom component to catch the distanceValue
-def get_distance():
-    # Define the JavaScript function to post distanceValue to Streamlit
-    mapbox_html = f"""
-    <script>
-    window.addEventListener('message', (event) => {{
-        if (event.data.distanceValue) {{
-            const distanceValue = event.data.distanceValue;
-            console.log('Distance Value received:', distanceValue);
-            // Send this data back to Streamlit using postMessage
-            window.parent.postMessage({{ 'distanceValue': distanceValue }}, "*");
-        }}
-    }});
-    </script>
-    """
-    # Create a custom component to render the map
-    return components.html(mapbox_html, height=600)
-
-# Call the function to get the distance value from JavaScript
-distanceValue = get_distance()
-if distanceValue:
-    st.write(f"Captured Distance Value: {distanceValue}")
 
 # Pipe data dictionaries
 B1001_data_dict = {
