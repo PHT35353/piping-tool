@@ -438,7 +438,7 @@ def B1001_filter(P, distanceValue):
         st.dataframe(df)
 
 # Similar filters for B1003, B1005, and B1008 (will follow the same pattern)
-def B1003_filter(P):
+def B1003_filter(P, distanceValue):
     B1003_data_dict['External diameter (mm)'] = list(map(float, B1003_data_dict['External diameter (mm)']))
     B1003_data_dict['Wall thickness (mm)'] = list(map(float, B1003_data_dict['Wall thickness (mm)']))
     B1003_data_dict['Cost per 100 m (Euro)'] = list(map(float, B1003_data_dict['Cost per 100 m (Euro)']))
@@ -464,7 +464,7 @@ def B1003_filter(P):
         df = pd.DataFrame(available_pipes)
         st.dataframe(df)
 
-def B1005_filter(P):
+def B1005_filter(P, distanceValue):
     B1005_data_dict['External diameter (mm)'] = list(map(float, B1005_data_dict['External diameter (mm)']))
     B1005_data_dict['Wall thickness (mm)'] = list(map(float, B1005_data_dict['Wall thickness (mm)']))
     B1005_data_dict['Cost per m04 (Euro)'] = list(map(float, B1005_data_dict['Cost per m04 (Euro)']))
@@ -490,7 +490,7 @@ def B1005_filter(P):
         df = pd.DataFrame(available_pipes)
         st.dataframe(df)
 
-def B1008_filter(P):
+def B1008_filter(P, distanceValue):
     B1008_data_dict['External diameter (mm)'] = list(map(float, B1008_data_dict['External diameter (mm)']))
     B1008_data_dict['Wall thickness (mm)'] = list(map(float, B1008_data_dict['Wall thickness (mm)']))
     B1008_data_dict['Pressure (bar)'] = list(map(float, B1008_data_dict['Pressure (bar)']))
