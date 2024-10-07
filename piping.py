@@ -542,7 +542,7 @@ def pipe_main():
             Pipe_Material = choose_pipe_material(P, T, M)
             st.write(f"Selected Pipe Material: {Pipe_Material}")
             Pipe_finder(Pipe_Material, P, distanceValue)
-
+            distanceValue = st.number_input("Enter the distance value (in meters):", min_value=0.0, format="%.2f")
     except Exception as e:
         st.error(f"An error occurred: {e}")
 
