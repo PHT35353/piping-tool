@@ -4,6 +4,7 @@ import math
 import streamlit.components.v1 as components
 import requests
 
+
 # Set up a title for the app
 st.title("Piping tool")
 
@@ -342,6 +343,29 @@ if address_search:
             st.sidebar.error("Error connecting to the Mapbox API.")
     except Exception as e:
         st.sidebar.error(f"Error: {e}")
+
+# Create a custom component to catch the distanceValue
+def get_distance():
+    # Define the JavaScript function to post distanceValue to Streamlit
+    mapbox_html = f"""
+    <script>
+    window.addEventListener('message', (event) => {{
+        if (event.data.distanceValue) {{
+            const distanceValue = event.data.distanceValue;
+            console.log('Distance Value received:', distanceValue);
+            // Send this data back to Streamlit using postMessage
+            window.parent.postMessage({{ 'distanceValue': distanceValue }}, "*");
+        }}
+    }});
+    </script>
+    """
+    # Create a custom component to render the map
+    return components.html(mapbox_html, height=600)
+
+# Call the function to get the distance value from JavaScript
+distanceValue = get_distance()
+if distanceValue:
+    st.write(f"Captured Distance Value: {distanceValue}")
 
 # Pipe data dictionaries
 B1001_data_dict = {
