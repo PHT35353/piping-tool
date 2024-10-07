@@ -203,8 +203,7 @@ mapbox_map_html = f"""
 
                     let distanceUnit = length >= 1 ? 'km' : 'm';
                     let distanceValue = length >= 1 ? length.toFixed(2) : (length * 1000).toFixed(2);
-                    window.parent.postMessage({{ distanceValue: distanceValue }}, "*");
-                    
+                    window.parent.document.getElementById('distance_value').value = distanceValue;
 
                     sidebarContent += '<p>Line ' + featureNames[feature.id] + ' belongs to ' + (startLandmark?.properties.name || 'Unknown') + ' - ' + (endLandmark?.properties.name || 'Unknown') + ': ' + distanceValue + ' ' + distanceUnit + '</p>';
                 }} else if (feature.geometry.type === 'Polygon') {{
@@ -323,6 +322,24 @@ mapbox_map_html = f"""
 
 # Render the Mapbox 3D Satellite map with drawing functionality and custom features
 components.html(mapbox_map_html, height=600)
+
+# Add the hidden input field to capture distanceValue from JavaScript
+components.html("""
+    <input type="hidden" id="distanceValue" name="distanceValue" value="0">
+""", height=0)
+
+# Use Streamlit to get the distance value from the hidden input
+distanceValue = st.text_input("Captured Distance Value", key="distanceValue")
+
+# Check if distance_value is valid, and convert to float if needed
+if distanceValue:
+    try:
+        distanceValue = float(distanceValue)
+    except ValueError:
+        st.error("Invalid distance value")
+else:
+    distance_value = 0.0
+
 
 # Address search using Mapbox Geocoding API
 if address_search:
