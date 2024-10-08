@@ -1,4 +1,4 @@
-gimport streamlit as st
+import streamlit as st
 import pandas as pd
 import math
 import streamlit.components.v1 as components
@@ -461,7 +461,7 @@ def B1003_filter(P, distanceValue):
     if not available_pipes:
         st.write(f"No pipes found for the pressure of {P} bar.")
     else:
-        st.write(f"Available carbon steel XS pipes for {P} bar or higher pressure:")
+        st.write(f"Available carbon steel extra strong pipes for {P} bar or higher pressure:")
         df = pd.DataFrame(available_pipes)
         st.dataframe(df)
 
